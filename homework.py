@@ -135,7 +135,7 @@ def main():
     if check_tokens() is False:
         sys.exit(logging.critical('Аутентификация с треском провалилась'))
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
-    current_timestamp = int(time.time()) - 60 * 10
+    current_timestamp = int(time.time()) #- 60 * 10
     traceback_value = None
     while True:
         try:
