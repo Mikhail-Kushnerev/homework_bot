@@ -21,7 +21,7 @@ PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
-RETRY_TIME = 5
+RETRY_TIME = 60 * 10
 ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
 HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
 
@@ -135,7 +135,7 @@ def main():
     if check_tokens() is False:
         sys.exit(logging.critical('Аутентификация с треском провалилась'))
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
-    current_timestamp = int(time.time()) #- 60 * 10
+    current_timestamp = int(time.time()) - RETRY_TIME
     traceback_value = None
     while True:
         try:
