@@ -73,14 +73,14 @@ def get_api_answer(current_timestamp):
         raise logger.error('Полученный ответ не в ожидаемом JSON-формате')
 
 
-def check_response(response):
+def check_response(respns):
     """Проверка пришедшего АРI-запроса на корректность."""
-    if type(response) != dict and len(response) == 0:
+    if type(respns) != dict and len(respns) == 0:
         raise DefectsDict(logger.error('Ошибка словаря'))
-    elif type(response['homeworks']) == list and len(response['homeworks']) == 0:
+    elif type(respns['homeworks']) == list and len(respns['homeworks']) == 0:
         raise DefectsList(logger.info('Обновлений нет'))
     logger.info('Получены данные последней работы')
-    return response['homeworks'][0]
+    return respns['homeworks'][0]
 
 
 def parse_status(homework):
