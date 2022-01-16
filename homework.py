@@ -8,7 +8,7 @@ import time
 from dotenv import load_dotenv
 from http import HTTPStatus
 
-from custom_exception import EmptyDict, ServerError, ListOutOfRange
+from custom_exception import DefectsDict, DefectsList, ServerError
 
 load_dotenv()
 
@@ -19,6 +19,7 @@ logging.basicConfig(
     format='%(asctime)s, %(levelname)s, %(message)s, %(name)s',
     handlers=[handler]
 )
+logger = logging.getLogger(__name__)
 
 PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
@@ -33,6 +34,8 @@ API_ERROR = (
     f'{PROGRAMM_ERROR} Эндпоинт {ENDPOINT} недоступен. '
     'Код ответа API: {0}'
 )
+ERROR = 'Непредвиденная ошибка: {0}'
+
 
 HOMEWORK_STATUSES = {
     'approved': 'Работа проверена: ревьюеру всё понравилось. Ура!',
@@ -45,9 +48,9 @@ def send_message(bot, message):
     """Отправляем сообщеньку."""
     try:
         bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
-        logging.info('Сообщение успешно дошло до получателя.')
+        logger.info('Сообщение успешно дошло до получателя.')
     except telegram.error.TelegramError:
-        logging.error('Сообщение не отправилось')
+        logger.error('Сообщение не отправилось')
 
 
 def get_api_answer(current_timestamp):
@@ -56,41 +59,40 @@ def get_api_answer(current_timestamp):
     try:
         response = requests.get(ENDPOINT, headers=HEADERS, params=params)
     except requests.exceptions.RequestException as request_error:
-        raise logging.error(request_error)
+        raise logger.error(request_error)
     if response.status_code != HTTPStatus.OK:
-        logging.error(
+        logger.error(
             f'{PROGRAMM_ERROR}. Эндпоинт {ENDPOINT} недоступен. '
             'Код ответа API: {0}'.format(response.status_code)
         )
         raise ServerError()
     try:
+        logger.info('Получен JSON-формат')
         return response.json()
     except json.JSONDecodeError():
-        logging.error('q')
+        raise logger.error('Полученный ответ не в ожидаемом JSON-формате')
 
 
 def check_response(response):
     """Проверка пришедшего АРI-запроса на корректность."""
-    if type(response) != dict:
-        raise
-    elif len(response) == 0:
-        raise EmptyDict(logging.info('Пустой словарь!'))
-    elif 'homeworks' not in response:
-        raise
-    elif type(response['homeworks']) != list:
-        raise
-    elif len(response['homeworks']) == 0:
-        raise ListOutOfRange(logging.info('Нет обновлений'))
+    if type(response) != dict and len(response) == 0:
+        raise DefectsDict(logger.error('Ошибка словаря'))
+    elif type(response['homeworks']) == list and len(response['homeworks']) == 0:
+        raise DefectsList(logger.info('Обновлений нет'))
+    logger.info('Получены данные последней работы')
     return response['homeworks'][0]
 
 
 def parse_status(homework):
     """Чекаем статус и вообще домашку. При нуле - ничего, а так happy_end."""
-    if 'homework_name' not in homework:
-        raise KeyError()
+    if ('homework_name' or 'status') not in homework:
+        raise KeyError(logger.error('Ошибка ключей'))
+    elif homework['status'] not in HOMEWORK_STATUSES:
+        raise logger.error('Ошибка статуса')
     homework_name = homework['homework_name']
     homework_status = homework['status']
     verdict = HOMEWORK_STATUSES[homework_status]
+    logger.info('Получен статус')
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
 
@@ -107,21 +109,20 @@ def check_tokens():
     )
     for index, value in params.items():
         if value is None:
-            logging.error(FAIL_TOKEN.format(index))
+            logger.error(FAIL_TOKEN.format(index))
             return False
-    logging.info('Проверка токенов прошла успешно.')
+    logger.info('Проверка токенов прошла успешно.')
     return True
 
 
-def send_error_message(bot, error, value):
+def send_error_message(bot, error, pattern, value):
     """
     Функция, возвращающая значение ошибки в случае сбоя.
     Каждая такая ошибка логируется + отправляется смс-уведомление
     пользователю об неисправности (в случае повтора – только один раз).
     """
-    logging.error(f'Ошибка {error}')
     if value is None:
-        value = API_ERROR.format(error)
+        value = pattern.format(error)
         send_message(bot, value)
     time.sleep(RETRY_TIME)
     return value
@@ -130,7 +131,7 @@ def send_error_message(bot, error, value):
 def main():
     """Основная логика работы бота."""
     if not check_tokens():
-        sys.exit(logging.critical('Аутентификация с треском провалилась'))
+        sys.exit(logger.critical('Аутентификация с треском провалилась'))
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     traceback_value = None
     while True:
@@ -141,16 +142,22 @@ def main():
             traceback_value = send_error_message(
                 bot,
                 sv_error,
+                API_ERROR,
                 traceback_value
             )
-        except EmptyDict:
+        except DefectsDict:
             time.sleep(RETRY_TIME)
             continue
-        except ListOutOfRange:
+        except DefectsList:
             time.sleep(RETRY_TIME)
             continue
         except Exception as error:
-            traceback_value = send_error_message(bot, error, traceback_value)
+            traceback_value = send_error_message(
+                bot,
+                error,
+                ERROR,
+                traceback_value
+            )
         else:
             send_message(bot, parse_status(response))
             time.sleep(RETRY_TIME)

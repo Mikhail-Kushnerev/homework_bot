@@ -1,5 +1,11 @@
-class EmptyDict(Exception):
+class DefectsDict(Exception):
     """Исключение, если у пришедшего АРI-запроса ничего нет."""
+
+    pass
+
+
+class DefectsList(Exception):
+    """Исключение, если нет новых сообщений."""
 
     pass
 
@@ -10,7 +16,4 @@ class ServerError(Exception):
     pass
 
 
-class ListOutOfRange(Exception):
-    """Исключение, если нет новых сообщений."""
 
-    pass
