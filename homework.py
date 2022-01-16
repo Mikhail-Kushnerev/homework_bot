@@ -1,11 +1,14 @@
+import json
 import os
+import logging
+import requests
 import sys
 import telegram
-import requests
 import time
-import logging
-from http import HTTPStatus
 from dotenv import load_dotenv
+from http import HTTPStatus
+
+from custom_exception import EmptyDict, ServerError, ListOutOfRange
 
 load_dotenv()
 
@@ -38,24 +41,6 @@ HOMEWORK_STATUSES = {
 }
 
 
-class EmptyDict(Exception):
-    """Исключение, если у пришедшего АРI-запроса ничего нет."""
-
-    pass
-
-
-class ServerError(Exception):
-    """Исключение, если битая ссылка."""
-
-    pass
-
-
-class ListOutOfRange(Exception):
-    """Исключение, если нет новых сообщений."""
-
-    pass
-
-
 def send_message(bot, message):
     """Отправляем сообщеньку."""
     try:
@@ -67,23 +52,34 @@ def send_message(bot, message):
 
 def get_api_answer(current_timestamp):
     """Берем АРI."""
-    timestamp = current_timestamp
-    params = {'from_date': timestamp}
-    response = requests.get(ENDPOINT, headers=HEADERS, params=params)
+    params = {'from_date': current_timestamp}
+    try:
+        response = requests.get(ENDPOINT, headers=HEADERS, params=params)
+    except requests.exceptions.RequestException as request_error:
+        raise logging.error(request_error)
     if response.status_code != HTTPStatus.OK:
         logging.error(
             f'{PROGRAMM_ERROR}. Эндпоинт {ENDPOINT} недоступен. '
             'Код ответа API: {0}'.format(response.status_code)
         )
         raise ServerError()
-    return response.json()
+    try:
+        return response.json()
+    except json.JSONDecodeError():
+        logging.error('q')
 
 
 def check_response(response):
     """Проверка пришедшего АРI-запроса на корректность."""
-    if len(response) == 0:
+    if type(response) != dict:
+        raise
+    elif len(response) == 0:
         raise EmptyDict(logging.info('Пустой словарь!'))
-    if len(response['homeworks']) == 0:
+    elif 'homeworks' not in response:
+        raise
+    elif type(response['homeworks']) != list:
+        raise
+    elif len(response['homeworks']) == 0:
         raise ListOutOfRange(logging.info('Нет обновлений'))
     return response['homeworks'][0]
 
@@ -117,12 +113,13 @@ def check_tokens():
     return True
 
 
-def function(bot, error, value):
+def send_error_message(bot, error, value):
     """
     Функция, возвращающая значение ошибки в случае сбоя.
     Каждая такая ошибка логируется + отправляется смс-уведомление
     пользователю об неисправности (в случае повтора – только один раз).
     """
+    logging.error(f'Ошибка {error}')
     if value is None:
         value = API_ERROR.format(error)
         send_message(bot, value)
@@ -132,16 +129,20 @@ def function(bot, error, value):
 
 def main():
     """Основная логика работы бота."""
-    if check_tokens() is False:
+    if not check_tokens():
         sys.exit(logging.critical('Аутентификация с треском провалилась'))
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
-    current_timestamp = int(time.time()) - RETRY_TIME
     traceback_value = None
     while True:
+        current_timestamp = int(time.time()) - RETRY_TIME
         try:
             response = check_response(get_api_answer(current_timestamp))
         except ServerError as sv_error:
-            traceback_value = function(bot, sv_error, traceback_value)
+            traceback_value = send_error_message(
+                bot,
+                sv_error,
+                traceback_value
+            )
         except EmptyDict:
             time.sleep(RETRY_TIME)
             continue
@@ -149,7 +150,7 @@ def main():
             time.sleep(RETRY_TIME)
             continue
         except Exception as error:
-            traceback_value = function(bot, error, traceback_value)
+            traceback_value = send_error_message(bot, error, traceback_value)
         else:
             send_message(bot, parse_status(response))
             time.sleep(RETRY_TIME)
