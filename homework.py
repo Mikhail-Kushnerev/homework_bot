@@ -140,7 +140,7 @@ def main():
         sys.exit(logger.critical('Аутентификация с треском провалилась'))
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     traceback_value = None
-    current_timestamp = 0
+    current_timestamp = int(time.time())
     while True:
         try:
             response = get_api_answer(current_timestamp)
