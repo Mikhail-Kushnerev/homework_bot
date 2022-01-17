@@ -140,12 +140,12 @@ def main():
         sys.exit(logger.critical('Аутентификация с треском провалилась'))
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     traceback_value = None
-    current_timestamp = int(time.time())
+    current_timestamp = 0
     while True:
         try:
             response = get_api_answer(current_timestamp)
             current_timestamp = response['current_date']
-            check_response(response)
+            answer = check_response(response)
         except ServerError as sv_error:
             traceback_value = send_error_message(
                 bot,
@@ -167,7 +167,7 @@ def main():
                 traceback_value
             )
         else:
-            send_message(bot, parse_status(response))
+            send_message(bot, parse_status(answer))
             time.sleep(RETRY_TIME)
 
 
