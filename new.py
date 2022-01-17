@@ -6,7 +6,6 @@ import sys
 import telegram
 import time
 from dotenv import load_dotenv
-from http import HTTPStatus
 
 from custom_exception import DefectsDict, DefectsList, ServerError
 
@@ -58,18 +57,15 @@ def get_api_answer(current_timestamp):
     params = {'from_date': current_timestamp}
     try:
         response = requests.get(ENDPOINT, headers=HEADERS, params=params)
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as http_error:
+        raise ServerError(logger.error('Код 404', http_error))
     except requests.exceptions.ConnectionError as connect_error:
         raise logger.error('Ошибка подключения:', connect_error)
     except requests.exceptions.Timeout as timout_error:
         raise logger.error('Время запроса вышло', timout_error)
     except requests.exceptions.RequestException as request_error:
         raise logger.error(request_error)
-    if response.status_code != HTTPStatus.OK:
-        logger.error(
-            f'{PROGRAMM_ERROR}. Эндпоинт {ENDPOINT} недоступен. '
-            'Код ответа API: {0}'.format(response.status_code)
-        )
-        raise ServerError()
     try:
         logger.info('Получен JSON-формат')
         return response.json()
@@ -89,10 +85,8 @@ def check_response(respns):
 
 def parse_status(homework):
     """Чекаем статус и вообще домашку. При нуле - ничего, а так happy_end."""
-    if 'homework_name' not in homework:
-        raise KeyError(logger.error('Ошибка ключа \'homework_name\''))
-    elif 'status' not in homework:
-        raise KeyError(logger.error('Ошибка ключа \'status\''))
+    if 'homework_name' and 'status' not in homework:
+        raise KeyError(logger.error('Ошибка ключей'))
     elif homework['status'] not in HOMEWORK_STATUSES:
         raise logger.error('Ошибка статуса')
     homework_name = homework['homework_name']

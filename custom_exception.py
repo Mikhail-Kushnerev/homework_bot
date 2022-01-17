@@ -14,6 +14,3 @@ class ServerError(Exception):
     """Исключение, если битая ссылка."""
 
     pass
-
-
-
