@@ -145,7 +145,7 @@ dmypy.json
 
 .mypy_cache
 
-Untitled
+Untitled.py
 
 # папки со статикой и медиа
 static/
