@@ -1,0 +1,86 @@
+if __name__ == '__main__':
+    main()
+
+    # import unittest
+    # from unittest import TestCase, mock
+
+    # class TestReq(TestCase):
+        # @mock.patch('requests.get')
+        # def test_main_with_req_raised(self, mock_rq_get):
+        #     mock_rq_get.side_effect = mock.Mock(
+        #         side_effect=requests.exceptions.RequestException('Unknown error'))
+        #     main()
+
+        # @mock.patch('requests.get')
+        # def test_main_with_404(self, mock_rq_get):
+        #     not_ok_response_mock = mock.MagicMock()
+        #     type(not_ok_response_mock).status_code = mock.PropertyMock(
+        #         return_value=404)
+        #     not_ok_response_mock.json.return_value = {"error": "testing"}
+        #     mock_rq_get.return_value = not_ok_response_mock
+        #     main()
+
+        # @mock.patch('requests.get')
+        # def test_main_with_req_error(self, mock_rq_get):
+        #     ok_response_mock = mock.MagicMock()
+        #     type(ok_response_mock).status_code = mock.PropertyMock(
+        #         return_value=200)
+        #     ok_response_mock.json.return_value = {"error": "testing"}
+        #     mock_rq_get.return_value = ok_response_mock
+        #     main()
+
+        # @mock.patch('requests.get')
+        # def test_main_with_req_bad_structure_json(self, mock_rq_get):
+        #     ok_response_mock = mock.MagicMock()
+        #     type(ok_response_mock).status_code = mock.PropertyMock(
+        #         return_value=200)
+        #     ok_response_mock.json.return_value = {
+        #         'homeworks': {'homeworks': ''},
+        #         'current_date': ''
+        #         }
+        #     mock_rq_get.return_value = ok_response_mock
+        #     main()
+
+        # @mock.patch('requests.get')
+        # def test_main_with_req_incorrect_answer(self, mock_rq_get):
+        #     ok_response_mock = mock.MagicMock()
+        #     type(ok_response_mock).status_code = mock.PropertyMock(
+        #         return_value=200)
+        #     ok_response_mock.json.return_value = {
+        #         'homeworks': [{'my_hw_name': 'name'}],
+        #         'current_date': ''
+        #         }
+        #     mock_rq_get.return_value = ok_response_mock
+        #     main()
+
+        # @mock.patch('requests.get')
+        # def test_main_with_none_json_answer(self, mock_rq_get):
+        #     ok_response_mock = mock.MagicMock()
+        #     type(ok_response_mock).status_code = mock.PropertyMock(
+        #         return_value=200)
+        #     ok_response_mock.json.return_value = 'homeworks'
+        #     mock_rq_get.return_value = ok_response_mock
+        #     main()
+        
+    #     @mock.patch('requests.get')
+    #     def test_main_with_correct_json(self, mock_rq_get):
+    #         ok_response_mock = mock.MagicMock()
+    #         type(ok_response_mock).status_code = mock.PropertyMock(
+    #             return_value=200)
+    #         ok_response_mock.json.return_value = {
+    #             'homeworks': [
+    #                 {
+    #                     'id': 124,
+    #                     'status': 'reviewin',
+    #                     'homework_name': 'username__hw_python_oop.zip',
+    #                     'reviewer_comment': 'Код не по PEP8, нужно исправить',
+    #                     'date_updated': '2020-02-13T16:42:47Z',
+    #                     'lesson_name': 'Итоговый проект'
+    #                     }
+    #                 ],
+    #             'current_date': ''
+    #             }
+    #         mock_rq_get.return_value = ok_response_mock
+    #         main()
+
+    # unittest.main()

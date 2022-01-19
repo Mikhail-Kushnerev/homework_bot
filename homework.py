@@ -146,6 +146,7 @@ def main():
             response = get_api_answer(current_timestamp)
             current_timestamp = response['current_date']
             answer = check_response(response)
+            message = parse_status(answer)
         except ServerError as sv_error:
             traceback_value = send_error_message(
                 bot,
@@ -167,7 +168,7 @@ def main():
                 traceback_value
             )
         else:
-            send_message(bot, parse_status(answer))
+            send_message(bot, message)
             time.sleep(RETRY_TIME)
 
 
