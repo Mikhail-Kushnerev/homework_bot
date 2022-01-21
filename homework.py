@@ -25,8 +25,8 @@ PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
-RETRY_TIME = 60 * 10
-ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
+RETRY_TIME = 5
+ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_satuses/'
 HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
 
 PROGRAMM_ERROR = 'Сбой в работе программы: '
@@ -82,7 +82,8 @@ def check_response(respns):
     if type(respns) is not dict and len(respns) == 0:
         raise DefectsDict(logger.error('Ошибка словаря'))
     elif type(respns['homeworks']) is list and len(respns['homeworks']) == 0:
-        raise DefectsList(logger.info('Обновлений нет'))
+        #logger.info('Обновлений нет')
+        raise DefectsList()
     logger.info('Получены данные последней работы')
     return respns['homeworks'][0]
 
@@ -147,6 +148,7 @@ def main():
             current_timestamp = response['current_date']
             answer = check_response(response)
             message = parse_status(answer)
+            send_message(bot, message)
         except ServerError as sv_error:
             traceback_value = send_error_message(
                 bot,
@@ -168,7 +170,6 @@ def main():
                 traceback_value
             )
         else:
-            send_message(bot, message)
             time.sleep(RETRY_TIME)
 
 
