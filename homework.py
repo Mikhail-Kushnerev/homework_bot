@@ -82,7 +82,7 @@ def check_response(respns):
     if type(respns) is not dict and len(respns) == 0:
         raise DefectsDict(logger.error('Ошибка словаря'))
     elif type(respns['homeworks']) is list and len(respns['homeworks']) == 0:
-        #logger.info('Обновлений нет')
+        logger.info('Обновлений нет')
         raise DefectsList()
     logger.info('Получены данные последней работы')
     return respns['homeworks'][0]
