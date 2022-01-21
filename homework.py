@@ -25,7 +25,7 @@ PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
-RETRY_TIME = 600
+RETRY_TIME = 5
 ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
 HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
 
@@ -77,11 +77,12 @@ def get_api_answer(current_timestamp):
         raise logger.error('Полученный ответ не в ожидаемом JSON-формате')
 
 
-def check_response(respns):
+def check_response(bot, respns):
     """Проверка пришедшего АРI-запроса на корректность."""
     if type(respns) is not dict and len(respns) == 0:
         raise DefectsDict(logger.error('Ошибка словаря'))
     elif type(respns['homeworks']) is list and len(respns['homeworks']) == 0:
+        send_message(bot, 'Обновлений нет')
         raise DefectsList(logger.info('Обновлений нет'))
     logger.info('Получены данные последней работы')
     return respns['homeworks'][0]
@@ -145,7 +146,7 @@ def main():
         try:
             response = get_api_answer(current_timestamp)
             current_timestamp = response['current_date']
-            answer = check_response(response)
+            answer = check_response(bot, response)
             message = parse_status(answer)
             send_message(bot, message)
         except ServerError as sv_error:
