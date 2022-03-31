@@ -137,7 +137,7 @@ def send_error_message(bot, error, pattern, value):
 def main():
     """Основная логика работы бота."""
     if not check_tokens():
-        sys.exit(logger.critical('Аутентификация с треском провалилась'))
+        exit(logger.critical('Аутентификация с треском провалилась'))
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     traceback_value = None
     current_timestamp = int(time.time())
@@ -148,6 +148,7 @@ def main():
             answer = check_response(response)
             message = parse_status(answer)
             send_message(bot, message)
+            traceback_value = None
         except ServerError as sv_error:
             traceback_value = send_error_message(
                 bot,
